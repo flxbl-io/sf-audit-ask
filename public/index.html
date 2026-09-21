@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Ask Flux whether a change was made in your Salesforce org. Drop in a Setup Audit Trail CSV and get yes or no, how sure Flux is, and the row that says so. No login, no cookies, no analytics. An experiment by flxbl.">
+  <title>Ask Flux · flxbl</title>
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="flxbl">
+  <meta property="og:url" content="https://askflux.flxbl.io/">
+  <meta property="og:title" content="Ask Flux">
+  <meta property="og:description" content="Ask whether a change was made in your Salesforce org. Drop in a Setup Audit Trail CSV: a yes or a no, how sure, the row that says so, and what it cost. No login. An experiment by flxbl.">
+  <meta property="og:image" content="https://askflux.flxbl.io/og.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Flux, a fennec fox in a red flxbl bandana, holding a code tile, beside the words Ask Flux">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ask Flux">
+  <meta name="twitter:description" content="Ask whether a change was made in your Salesforce org. A yes or a no, how sure, the row that says so, and what it cost. No login.">
+  <meta name="twitter:image" content="https://askflux.flxbl.io/og.jpg">
+  <link rel="icon" href="/favicon.png" type="image/png" sizes="128x128">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preload" href="/flux.webp" as="image" type="image/webp">
+  <link rel="preload" href="/fonts/inter.var.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <nav class="bar">
+    <a class="brand" href="https://flxbl.io" rel="noopener"><svg class="logo" role="img" aria-label="flxbl" viewBox="0 0 1374 488" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M157.347 117.619C151.347 126.604 153.735 138.623 162.796 144.572C178.47 154.953 212.816 190.951 212.816 244.979C212.816 299.007 178.47 335.005 162.735 345.386C153.735 351.335 151.286 363.415 157.286 372.339C163.286 381.263 175.47 383.691 184.47 377.742C207.98 362.14 252 315.276 252 244.979C252 174.682 207.98 127.757 184.531 112.277C175.47 106.328 163.347 108.696 157.347 117.619Z" fill="#E54666"/><path d="M307 0C318.616 0 328 8.65318 328 19.3638V468.636C328 479.347 318.616 488 307 488C295.384 488 286 479.347 286 468.636V19.3638C286 8.65318 295.384 0 307 0Z" fill="#E54666"/><path d="M544.849 178.644C553.121 186.962 553.706 199.813 546.157 207.403L530.411 223.234L592.699 223.234C603.375 223.234 612 232.737 612 244.5C612 256.263 603.375 265.766 592.699 265.766L530.411 265.765L546.157 281.597C553.62 289.1 553.133 301.747 545.128 310.07L544.849 310.356C536.576 318.673 523.793 319.261 516.244 311.671L463.3 258.441C459.566 254.686 457.822 249.644 458.014 244.5C457.822 239.356 459.566 234.314 463.3 230.559L516.244 177.329C523.793 169.739 536.576 170.327 544.849 178.644Z" fill="#E54666"/><path d="M67.1515 178.644C58.8788 186.962 58.294 199.813 65.8429 207.403L81.589 223.234L19.3008 223.234C8.62502 223.234 0 232.737 0 244.5C0 256.263 8.62502 265.766 19.3008 265.766L81.589 265.765L65.8429 281.597C58.3798 289.1 58.8666 301.747 66.8725 310.07L67.1515 310.356C75.4243 318.673 88.2068 319.261 95.7557 311.671L148.7 258.441C152.434 254.686 154.178 249.644 153.986 244.5C154.178 239.356 152.434 234.314 148.7 230.559L95.7557 177.329C88.2068 169.739 75.4243 170.327 67.1515 178.644Z" fill="#E54666"/><path d="M455.653 117.601C461.653 126.525 459.204 138.606 450.204 144.556C434.53 154.937 400.184 190.938 400.184 244.97C400.184 299.001 434.53 335.002 450.265 345.383C459.265 351.333 461.714 363.414 455.714 372.338C449.714 381.263 437.53 383.691 428.53 377.741C405.02 362.139 361 315.271 361 244.97C361 174.668 405.02 127.739 428.469 112.259C437.469 106.309 449.653 108.737 455.653 117.662V117.601Z" fill="#E54666"/><path d="M744.625 262.8V140.625C744.625 131.85 750.025 126 759.025 126H833.275C842.5 126 848.575 132.075 848.575 140.4C848.575 148.5 842.5 154.575 833.275 154.575H779.05C778.15 154.575 777.7 155.025 777.7 155.925V188.1C777.7 189 778.15 189.45 779.05 189.45H822.25C831.925 189.45 837.55 195.3 837.55 203.625C837.55 211.95 831.925 217.8 822.25 217.8H779.05C778.15 217.8 777.7 218.25 777.7 219.15V262.8C777.7 273.375 770.725 280.35 761.275 280.35C751.6 280.35 744.625 273.375 744.625 262.8Z" fill="currentColor"/><path d="M869.869 262.35V142.2C869.869 131.625 876.844 124.65 886.519 124.65C895.969 124.65 902.944 131.625 902.944 142.2V248.175C902.944 249.075 903.394 249.525 904.294 249.525H958.744C968.869 249.525 975.394 255.6 975.394 264.15C975.394 272.925 968.869 279 958.744 279H886.519C876.394 279 869.869 272.25 869.869 262.35Z" fill="currentColor"/><path d="M1089.88 280.35C1084.25 280.35 1079.75 277.875 1076.15 272.475L1046 227.925H1045.55L1015.4 272.475C1011.8 277.875 1007.3 280.35 1001.68 280.35C992.675 280.35 986.15 273.825 986.15 265.5C986.15 262.125 987.275 258.75 989.525 255.375L1026.88 200.475L992.225 149.625C989.975 146.25 988.85 142.875 988.85 139.5C988.85 131.175 995.375 124.65 1004.38 124.65C1010 124.65 1014.5 127.125 1018.1 132.525L1045.55 173.025H1046L1073.45 132.525C1077.05 127.125 1081.55 124.65 1087.18 124.65C1096.18 124.65 1102.7 131.175 1102.7 139.5C1102.7 142.875 1101.58 146.25 1099.33 149.625L1064.45 200.475L1102.03 255.375C1104.28 258.75 1105.4 262.125 1105.4 265.5C1105.4 273.825 1098.88 280.35 1089.88 280.35Z" fill="currentColor"/><path d="M1127.17 264.6V140.625C1127.17 131.85 1132.57 126 1141.57 126H1189.04C1222.34 126 1237.87 142.425 1237.87 166.725C1237.87 183.15 1230.44 193.725 1220.09 199.35V199.8C1230.22 203.85 1240.57 216.225 1240.57 234.45C1240.57 264.6 1220.54 279 1187.47 279H1141.57C1132.57 279 1127.17 273.375 1127.17 264.6ZM1161.59 188.55H1184.77C1197.37 188.55 1205.02 182.025 1205.02 170.55C1205.02 159.075 1197.59 152.775 1184.77 152.775H1161.59C1160.69 152.775 1160.24 153.225 1160.24 154.125V187.2C1160.24 188.1 1160.69 188.55 1161.59 188.55ZM1160.24 250.875C1160.24 251.775 1160.69 252.225 1161.59 252.225H1186.57C1200.07 252.225 1207.49 245.025 1207.49 232.875C1207.49 221.4 1200.07 213.975 1186.57 213.975H1161.59C1160.69 213.975 1160.24 214.425 1160.24 215.325V250.875Z" fill="currentColor"/><path d="M1264.5 262.35V142.2C1264.5 131.625 1271.47 124.65 1281.15 124.65C1290.6 124.65 1297.57 131.625 1297.57 142.2V248.175C1297.57 249.075 1298.02 249.525 1298.92 249.525H1353.37C1363.5 249.525 1370.02 255.6 1370.02 264.15C1370.02 272.925 1363.5 279 1353.37 279H1281.15C1271.02 279 1264.5 272.25 1264.5 262.35Z" fill="currentColor"/></svg><span class="product"><img class="avatar" src="/favicon.png" alt="" width="24" height="24">Ask Flux</span></a>
+    <div class="bar-end">
+      <span class="pill experimental" title="Flux can be wrong. Do not gate a release on it.">Experimental</span>
+      <a class="quiet" id="source-top" href="https://github.com/flxbl-io/sf-audit-ask" rel="noopener">Source</a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <img class="mascot" src="/flux.webp" alt="Flux, a fennec fox in a red flxbl bandana, holding up a code tile" width="560" height="586" fetchpriority="high">
+      <h1>Ask <span class="name">Flux</span></h1>
+      <p class="lede">Ask Flux about your Salesforce org and get a yes or a no, how sure Flux is, the record that says so, and what the answer cost. Each experiment reads one source. The first reads the Setup Audit Trail: drop it in and ask whether a change was made.</p>
+      <ul class="promises" aria-label="What this does not do">
+        <li>No login</li>
+        <li>No cookies, no analytics</li>
+        <li>Usernames never leave your browser</li>
+        <li>Nothing kept on our server</li>
+        <li>Source open to audit</li>
+      </ul>
+    </header>
+
+    <nav class="tabs" aria-label="Experiments">
+      <span class="tabs-label">Experiment</span>
+      <a class="tab" href="#audit-trail" aria-current="page">Setup Audit Trail</a>
+      <span class="tab soon">More to come</span>
+    </nav>
+
+    <section class="console" id="audit-trail" aria-label="Setup Audit Trail">
+      <div class="step" id="upload">
+        <div class="step-head"><span class="n">1</span><h2>The trail</h2></div>
+        <label id="drop" class="drop" for="file">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <span><strong>Choose a CSV</strong> or drop it here</span>
+          <small>Read in your browser and kept in this tab. Nothing is sent until you ask.</small>
+        </label>
+        <input id="file" type="file" accept=".csv,text/csv" hidden>
+        <div id="loaded" class="loaded" hidden>
+          <div>
+            <strong id="loaded-name"></strong>
+            <span id="loaded-detail"></span>
+          </div>
+          <button id="forget" type="button" class="ghost">Forget this file</button>
+        </div>
+        <p id="trail" class="note" hidden></p>
+        <details>
+          <summary>Where do I get the file?</summary>
+          <p>In Setup, open <em>View Setup Audit Trail</em> and download the last six months. Or, with the Salesforce CLI, which gives exact dates and Salesforce's own action codes:</p>
+          <pre>sf data query -o my-org --result-format csv \
+  -q "SELECT CreatedDate, Action, Section, Display FROM SetupAuditTrail ORDER BY CreatedDate DESC" &gt; trail.csv</pre>
+        </details>
+      </div>
+
+      <div class="step" id="ask" aria-disabled="true">
+        <div class="step-head"><span class="n">2</span><h2>The question</h2>
+          <div class="meter" id="meter" role="img" aria-label="Questions left"></div>
+        </div>
+        <form id="form">
+          <input id="question" type="text" maxlength="500" placeholder="Was the fiscal year set to start in April?" autocomplete="off" disabled>
+          <button id="send" disabled><span>Ask Flux</span></button>
+        </form>
+        <div id="human" class="human" hidden>
+          <div id="human-widget"></div>
+          <small>One check that you are a person, by Cloudflare Turnstile. It keeps this free to use.</small>
+        </div>
+        <div class="examples" id="examples">
+          <button type="button" class="chip">Is email deliverability set to All email?</button>
+          <button type="button" class="chip">Can admins log in as any user?</button>
+          <button type="button" class="chip">Was the default workflow user changed to Integration User?</button>
+        </div>
+        <p id="left" class="note"></p>
+      </div>
+    </section>
+
+    <section id="tally" class="tally" aria-label="What this has cost" hidden>
+      <div><span class="tally-n" id="tally-spent"></span><span class="tally-l">spent in this tab</span></div>
+      <div><span class="tally-n" id="tally-asked"></span><span class="tally-l">questions</span></div>
+      <div><span class="tally-n" id="tally-avg"></span><span class="tally-l">per question</span></div>
+      <div><span class="tally-n" id="tally-tokens"></span><span class="tally-l">tokens Jev read</span></div>
+      <p class="tally-note" id="tally-note"></p>
+    </section>
+
+    <section id="answers" class="answers" aria-live="polite"></section>
+
+    <section class="about">
+      <div class="experiment">
+        <div>
+          <h2>Flux is an experiment</h2>
+          <p class="about-lede">Built by flxbl to see how well Jev, a System One model by TypeSafe, reads an audit trail. Flux is often right and sometimes wrong. Use it to look, not to sign off a release.</p>
+        </div>
+        <img class="playing" src="/flux-play.webp" alt="Flux lying on its back, batting at three floating cubes" width="720" height="518">
+      </div>
+      <div class="cannot">
+        <div><h3>Not proof</h3><p>The answer is read from the file you chose, not from Salesforce. A CSV can be edited.</p></div>
+        <div><h3>No means "not in this file"</h3><p>Salesforce keeps the trail for 180 days and does not record every Setup change.</p></div>
+        <div><h3>It cannot count</h3><p>"How many times…" is not a yes/no question. Ask about one change, and name the value.</p></div>
+      </div>
+    </section>
+
+    <section class="about">
+      <h2>Where your file goes</h2>
+      <p class="about-lede">Every hop, in order. There is nothing else: no analytics script, no tracking pixel, no font or script CDN, no cookie.</p>
+      <ol class="flow">
+        <li><span class="where">Your browser</span><p>Parses the CSV and keeps it in this tab. Removes the User and Delegate User columns. When you ask, the date, action, section and text of each change are sent with the question, compressed.</p></li>
+        <li data-if="turnstile"><span class="where">Cloudflare</span><p>Sits in front of the server and runs the "are you human" check. Like any network in between, it sees your IP address.</p></li>
+        <li><span class="where">Our server</span><p>Keeps nothing. Your rows arrive with each question and are gone when the answer is sent. Nothing is written to disk. Logs carry counts and timings: never your question, your rows or your address.</p></li>
+        <li data-if="redis"><span class="where">Upstash Redis</span><p>Counts your questions. It holds a keyed hash of your address and browser identifier for <span data-config="windowHours">24</span> hours. The hash cannot be turned back into either.</p></li>
+        <li><span class="where">Jev, by TypeSafe</span><p>A System One model. Reads the rows, a page at a time, and answers yes or no with a probability. TypeSafe states it does not train on requests.</p></li>
+        <li data-if="haiku"><span class="where">Claude Haiku, by Anthropic</span><p>Words the sentence under the answer. It sees your question and the one row pointed to: never the rest of the trail.</p></li>
+      </ol>
+      <p class="fineprint">The text of a change is sent as Salesforce recorded it, and can itself name a person or an email address. Your IP address and a random browser identifier are counted to keep to <span data-config="maxAttempts">20</span> questions per <span data-config="windowHours">24</span> hours. <a id="source-mid" href="https://github.com/flxbl-io/sf-audit-ask" rel="noopener">Read the source</a> and check any of this for yourself.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <a class="brand small" href="https://flxbl.io" rel="noopener"><svg class="logo" role="img" aria-label="flxbl" viewBox="0 0 1374 488" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M157.347 117.619C151.347 126.604 153.735 138.623 162.796 144.572C178.47 154.953 212.816 190.951 212.816 244.979C212.816 299.007 178.47 335.005 162.735 345.386C153.735 351.335 151.286 363.415 157.286 372.339C163.286 381.263 175.47 383.691 184.47 377.742C207.98 362.14 252 315.276 252 244.979C252 174.682 207.98 127.757 184.531 112.277C175.47 106.328 163.347 108.696 157.347 117.619Z" fill="#E54666"/><path d="M307 0C318.616 0 328 8.65318 328 19.3638V468.636C328 479.347 318.616 488 307 488C295.384 488 286 479.347 286 468.636V19.3638C286 8.65318 295.384 0 307 0Z" fill="#E54666"/><path d="M544.849 178.644C553.121 186.962 553.706 199.813 546.157 207.403L530.411 223.234L592.699 223.234C603.375 223.234 612 232.737 612 244.5C612 256.263 603.375 265.766 592.699 265.766L530.411 265.765L546.157 281.597C553.62 289.1 553.133 301.747 545.128 310.07L544.849 310.356C536.576 318.673 523.793 319.261 516.244 311.671L463.3 258.441C459.566 254.686 457.822 249.644 458.014 244.5C457.822 239.356 459.566 234.314 463.3 230.559L516.244 177.329C523.793 169.739 536.576 170.327 544.849 178.644Z" fill="#E54666"/><path d="M67.1515 178.644C58.8788 186.962 58.294 199.813 65.8429 207.403L81.589 223.234L19.3008 223.234C8.62502 223.234 0 232.737 0 244.5C0 256.263 8.62502 265.766 19.3008 265.766L81.589 265.765L65.8429 281.597C58.3798 289.1 58.8666 301.747 66.8725 310.07L67.1515 310.356C75.4243 318.673 88.2068 319.261 95.7557 311.671L148.7 258.441C152.434 254.686 154.178 249.644 153.986 244.5C154.178 239.356 152.434 234.314 148.7 230.559L95.7557 177.329C88.2068 169.739 75.4243 170.327 67.1515 178.644Z" fill="#E54666"/><path d="M455.653 117.601C461.653 126.525 459.204 138.606 450.204 144.556C434.53 154.937 400.184 190.938 400.184 244.97C400.184 299.001 434.53 335.002 450.265 345.383C459.265 351.333 461.714 363.414 455.714 372.338C449.714 381.263 437.53 383.691 428.53 377.741C405.02 362.139 361 315.271 361 244.97C361 174.668 405.02 127.739 428.469 112.259C437.469 106.309 449.653 108.737 455.653 117.662V117.601Z" fill="#E54666"/><path d="M744.625 262.8V140.625C744.625 131.85 750.025 126 759.025 126H833.275C842.5 126 848.575 132.075 848.575 140.4C848.575 148.5 842.5 154.575 833.275 154.575H779.05C778.15 154.575 777.7 155.025 777.7 155.925V188.1C777.7 189 778.15 189.45 779.05 189.45H822.25C831.925 189.45 837.55 195.3 837.55 203.625C837.55 211.95 831.925 217.8 822.25 217.8H779.05C778.15 217.8 777.7 218.25 777.7 219.15V262.8C777.7 273.375 770.725 280.35 761.275 280.35C751.6 280.35 744.625 273.375 744.625 262.8Z" fill="currentColor"/><path d="M869.869 262.35V142.2C869.869 131.625 876.844 124.65 886.519 124.65C895.969 124.65 902.944 131.625 902.944 142.2V248.175C902.944 249.075 903.394 249.525 904.294 249.525H958.744C968.869 249.525 975.394 255.6 975.394 264.15C975.394 272.925 968.869 279 958.744 279H886.519C876.394 279 869.869 272.25 869.869 262.35Z" fill="currentColor"/><path d="M1089.88 280.35C1084.25 280.35 1079.75 277.875 1076.15 272.475L1046 227.925H1045.55L1015.4 272.475C1011.8 277.875 1007.3 280.35 1001.68 280.35C992.675 280.35 986.15 273.825 986.15 265.5C986.15 262.125 987.275 258.75 989.525 255.375L1026.88 200.475L992.225 149.625C989.975 146.25 988.85 142.875 988.85 139.5C988.85 131.175 995.375 124.65 1004.38 124.65C1010 124.65 1014.5 127.125 1018.1 132.525L1045.55 173.025H1046L1073.45 132.525C1077.05 127.125 1081.55 124.65 1087.18 124.65C1096.18 124.65 1102.7 131.175 1102.7 139.5C1102.7 142.875 1101.58 146.25 1099.33 149.625L1064.45 200.475L1102.03 255.375C1104.28 258.75 1105.4 262.125 1105.4 265.5C1105.4 273.825 1098.88 280.35 1089.88 280.35Z" fill="currentColor"/><path d="M1127.17 264.6V140.625C1127.17 131.85 1132.57 126 1141.57 126H1189.04C1222.34 126 1237.87 142.425 1237.87 166.725C1237.87 183.15 1230.44 193.725 1220.09 199.35V199.8C1230.22 203.85 1240.57 216.225 1240.57 234.45C1240.57 264.6 1220.54 279 1187.47 279H1141.57C1132.57 279 1127.17 273.375 1127.17 264.6ZM1161.59 188.55H1184.77C1197.37 188.55 1205.02 182.025 1205.02 170.55C1205.02 159.075 1197.59 152.775 1184.77 152.775H1161.59C1160.69 152.775 1160.24 153.225 1160.24 154.125V187.2C1160.24 188.1 1160.69 188.55 1161.59 188.55ZM1160.24 250.875C1160.24 251.775 1160.69 252.225 1161.59 252.225H1186.57C1200.07 252.225 1207.49 245.025 1207.49 232.875C1207.49 221.4 1200.07 213.975 1186.57 213.975H1161.59C1160.69 213.975 1160.24 214.425 1160.24 215.325V250.875Z" fill="currentColor"/><path d="M1264.5 262.35V142.2C1264.5 131.625 1271.47 124.65 1281.15 124.65C1290.6 124.65 1297.57 131.625 1297.57 142.2V248.175C1297.57 249.075 1298.02 249.525 1298.92 249.525H1353.37C1363.5 249.525 1370.02 255.6 1370.02 264.15C1370.02 272.925 1363.5 279 1353.37 279H1281.15C1271.02 279 1264.5 272.25 1264.5 262.35Z" fill="currentColor"/></svg></a>
+    <p>Flux is an experiment by <a href="https://flxbl.io" rel="noopener">flxbl</a>. <a id="source-foot" href="https://github.com/flxbl-io/sf-audit-ask" rel="noopener">Source</a><span id="build"></span>. Not affiliated with Salesforce.</p>
+  </footer>
+
+  <template id="answer-template">
+    <article class="answer">
+      <p class="asked"></p>
+      <div class="verdict-row">
+        <span class="verdict"></span>
+        <div class="sure"><div class="sure-bar"><i></i></div><span class="sure-text"></span></div>
+        <div class="price"><span class="price-amount"></span><span class="price-label">this answer cost</span><span class="price-split"></span></div>
+      </div>
+      <p class="message"></p>
+      <div class="evidence" hidden>
+        <span class="evidence-label">The change it points to</span>
+        <code></code>
+      </div>
+      <p class="meta"></p>
+    </article>
+  </template>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

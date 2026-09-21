@@ -1,0 +1,18 @@
+{
+  "name": "@flxbl-io/sf-audit-ask",
+  "version": "0.1.0",
+  "private": true,
+  "license": "FSL-1.1-Apache-2.0",
+  "description": "Ask Flux: upload a Salesforce Setup Audit Trail CSV and ask whether a change was made. No login.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.127.0"
+  }
+}

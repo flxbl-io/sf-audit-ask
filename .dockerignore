@@ -1,0 +1,10 @@
+node_modules
+test
+deploy
+.env
+*.csv
+.git
+api
+vercel.json
+docs
+.lavish

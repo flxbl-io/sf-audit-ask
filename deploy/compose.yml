@@ -1,0 +1,29 @@
+# One Hetzner box, no open ports. Cloudflare Tunnel dials out; nothing on the internet can reach the app directly,
+# which is what makes it safe to believe the CF-Connecting-IP header.
+#
+#   GIT_COMMIT=$(git rev-parse HEAD) docker compose -f deploy/compose.yml --env-file deploy/.env up -d --build
+services:
+  app:
+    build:
+      context: ..
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      CLIENT_IP_HEADER: cf-connecting-ip
+    read_only: true            # the app writes nothing, and here it cannot
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1500m
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  tunnel:
+    image: cloudflare/cloudflared:latest    # pin to a dated tag once you have picked one
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    depends_on: [app]
