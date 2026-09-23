@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="Ask Flux whether a change was made in your Salesforce org. Drop in a Setup Audit Trail CSV and get yes or no, how sure Flux is, and the row that says so. No login, no cookies, no analytics. An experiment by flxbl.">
+  <meta name="description" content="Ask Flux about your Salesforce org: whether a change was made, from a Setup Audit Trail, or which way a flow goes, from what you say happened. How sure Flux is, and what each answer cost. No login, no cookies, no analytics. An experiment by flxbl.">
   <title>Ask Flux · flxbl</title>
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="flxbl">
   <meta property="og:url" content="https://askflux.flxbl.io/">
   <meta property="og:title" content="Ask Flux">
-  <meta property="og:description" content="Ask whether a change was made in your Salesforce org. Drop in a Setup Audit Trail CSV: a yes or a no, how sure, the row that says so, and what it cost. No login. An experiment by flxbl.">
+  <meta property="og:description" content="Ask whether a change was made in your Salesforce org, or watch which way a flow goes for what you say happened. How sure, and what it cost. No login. An experiment by flxbl.">
   <meta property="og:image" content="https://askflux.flxbl.io/og.jpg">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="1200">
@@ -18,7 +18,7 @@
   <meta property="og:image:alt" content="Flux, a fennec fox in a red flxbl bandana, holding a code tile, beside the words Ask Flux">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Ask Flux">
-  <meta name="twitter:description" content="Ask whether a change was made in your Salesforce org. A yes or a no, how sure, the row that says so, and what it cost. No login.">
+  <meta name="twitter:description" content="Ask whether a change was made in your Salesforce org, or watch which way a flow goes. How sure, and what it cost. No login.">
   <meta name="twitter:image" content="https://askflux.flxbl.io/og.jpg">
   <link rel="icon" href="/favicon.png" type="image/png" sizes="128x128">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -41,7 +41,7 @@
     <header class="hero">
       <img class="mascot" src="/flux.webp" alt="Flux, a fennec fox in a red flxbl bandana, holding up a code tile" width="560" height="586" fetchpriority="high">
       <h1>Ask <span class="name">Flux</span></h1>
-      <p class="lede">Ask Flux about your Salesforce org and get a yes or a no, how sure Flux is, the record that says so, and what the answer cost. Each experiment reads one source. The first reads the Setup Audit Trail: drop it in and ask whether a change was made.</p>
+      <p class="lede">Ask Flux about your Salesforce org and see how sure it is, and what every answer cost. Each experiment reads one source: drop in a Setup Audit Trail and ask whether a change was made, or load a flow, say what happened, and watch which way it goes.</p>
       <ul class="promises" aria-label="What this does not do">
         <li>No login</li>
         <li>No cookies, no analytics</li>
@@ -53,10 +53,12 @@
 
     <nav class="tabs" aria-label="Experiments">
       <span class="tabs-label">Experiment</span>
-      <a class="tab" href="#audit-trail" aria-current="page">Setup Audit Trail</a>
+      <a class="tab" href="#audit-trail" data-tab="audit-trail" aria-current="page">Setup Audit Trail</a>
+      <a class="tab" href="#flow" data-tab="flow">Flow walk <span class="new">New</span></a>
       <span class="tab soon">More to come</span>
     </nav>
 
+    <div data-panel="audit-trail">
     <section class="console" id="audit-trail" aria-label="Setup Audit Trail">
       <div class="step" id="upload">
         <div class="step-head"><span class="n">1</span><h2>The trail</h2></div>
@@ -141,6 +143,105 @@
       </ol>
       <p class="fineprint">The text of a change is sent as Salesforce recorded it, and can itself name a person or an email address. Your IP address and a random browser identifier are counted to keep to <span data-config="maxAttempts">20</span> questions per <span data-config="windowHours">24</span> hours. <a id="source-mid" href="https://github.com/flxbl-io/sf-audit-ask" rel="noopener">Read the source</a> and check any of this for yourself.</p>
     </section>
+    </div>
+
+    <div data-panel="flow" hidden>
+    <section class="console wide" id="flow" aria-label="Flow walk">
+      <div class="flow-steps">
+        <div class="step" id="flow-upload">
+          <div class="step-head"><span class="n">1</span><h2>The flow</h2></div>
+          <label id="flow-drop" class="drop" for="flow-file">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+            <span><strong>Choose a .flow-meta.xml</strong> or drop it here</span>
+            <small>Read and drawn in your browser. Only its decisions are sent, and only when a situation is walked.</small>
+          </label>
+          <input id="flow-file" type="file" accept=".xml,application/xml,text/xml" hidden>
+          <button id="flow-sample" type="button" class="linkish">Or try the sample flow: Case Triage</button>
+          <div id="flow-loaded" class="loaded" hidden>
+            <div>
+              <strong id="flow-name"></strong>
+              <span id="flow-detail"></span>
+            </div>
+            <button id="flow-forget" type="button" class="ghost">Choose another</button>
+          </div>
+          <p id="flow-note" class="note" hidden></p>
+          <details>
+            <summary>Where do I get the file?</summary>
+            <p>From a Salesforce DX project (<em>force-app/main/default/flows</em>), or with the Salesforce CLI:</p>
+            <pre>sf project retrieve start -o my-org -m "Flow:My_Flow"</pre>
+          </details>
+        </div>
+
+        <div class="step" id="flow-ask" aria-disabled="true">
+          <div class="step-head"><span class="n">2</span><h2>What happened</h2>
+            <button id="suggest" type="button" class="ghost" hidden disabled>Write new situations</button>
+          </div>
+          <p id="suggest-status" class="note flush"></p>
+          <div id="situations" class="situations"></div>
+          <form id="flow-form">
+            <textarea id="situation" rows="2" maxlength="1200" placeholder="Or say what happened in your own words: “A Gold customer emailed about a cracked laptop screen; it is still under warranty.”" disabled></textarea>
+            <button id="walk" disabled><span>Walk the flow</span></button>
+          </form>
+          <div id="flow-human" class="human" hidden>
+            <div id="flow-human-widget"></div>
+            <small>One check that you are a person, by Cloudflare Turnstile. It keeps this free to use.</small>
+          </div>
+          <p id="flow-left" class="note"></p>
+        </div>
+      </div>
+
+      <div id="stage" class="stage" hidden>
+        <div class="canvas-wrap">
+          <svg id="canvas" role="img" aria-label="The flow, as Flow Builder draws it"></svg>
+          <div class="canvas-tools" role="toolbar" aria-label="Canvas">
+            <button id="follow" type="button" aria-pressed="true" title="Keep the walk in view">Follow</button>
+            <button id="fit" type="button" title="Show the whole flow">Whole flow</button>
+            <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+            <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+            <button id="expand" type="button" aria-pressed="false" title="Give the flow the whole window (Esc to come back)">Full screen</button>
+          </div>
+          <p class="canvas-hint">Drag to move around. Ctrl or ⌘ and scroll to zoom.</p>
+          <div id="fork" class="fork-ask" role="group" aria-label="Jev is not sure" hidden></div>
+        </div>
+        <section class="trace" aria-label="The walk, step by step">
+          <div class="trace-head">
+            <h3>The walk</h3><p id="trace-meta" class="trace-meta"></p>
+            <div id="walk-price" class="price compact" hidden><span class="price-amount"></span><span class="price-label">this walk cost</span><span class="price-split"></span></div>
+          </div>
+          <ol id="trace-list" aria-live="polite"></ol>
+          <p id="verdict" class="verdict-line" hidden></p>
+        </section>
+      </div>
+    </section>
+
+    <section id="flow-tally" class="tally" aria-label="What this has cost" hidden>
+      <div><span class="tally-n" id="flow-spent"></span><span class="tally-l">spent in this tab</span></div>
+      <div><span class="tally-n" id="flow-walks"></span><span class="tally-l">walks by Jev</span></div>
+      <div><span class="tally-n" id="flow-per-walk"></span><span class="tally-l">per walk</span></div>
+      <div><span class="tally-n" id="flow-opus"></span><span class="tally-l">situations by Opus</span></div>
+      <p class="tally-note" id="flow-tally-note"></p>
+    </section>
+
+    <section class="about">
+      <h2>How the walk works</h2>
+      <p class="about-lede">Jev does not run the flow. It reads what you said happened and, for every decision in the flow at once, picks the outcome the flow would take, with how sure it is. The page then follows the flow's own connectors through those answers. Where Jev is not sure, the walk stops and asks you.</p>
+      <div class="cannot">
+        <div><h3>Words, not records</h3><p>Nothing is read from Salesforce. What a lookup would find is whatever the situation says it would find.</p></div>
+        <div><h3>The first outcome wins</h3><p>Salesforce takes the first outcome whose conditions hold. When two could hold, Jev can pick the more obvious one instead.</p></div>
+        <div><h3>A sketch, not a test</h3><p>Use it to see how a flow reads. To prove what it does, run it in a sandbox.</p></div>
+      </div>
+    </section>
+
+    <section class="about">
+      <h2>Where your flow goes</h2>
+      <ol class="flow">
+        <li><span class="where">Your browser</span><p>Reads the file and draws it. Sends only the decisions: their outcomes and conditions, the names of the steps, and the formulas the decisions use. Never a record: a flow file holds none.</p></li>
+        <li><span class="where">Our server</span><p>Keeps nothing, and logs only counts and timings: never the flow or the situation.</p></li>
+        <li><span class="where">Jev, by TypeSafe</span><p>Reads the decisions and the situation, and picks an outcome for each decision.</p></li>
+        <li data-if-flow="writer"><span class="where">Claude Opus 5, by Anthropic</span><p>Reads the same decisions and steps, and writes the situations to try. It never sees a situation you type.</p></li>
+      </ol>
+    </section>
+    </div>
   </main>
 
   <footer class="foot">
@@ -166,5 +267,6 @@
   </template>
 
   <script type="module" src="/app.js"></script>
+  <script type="module" src="/flow/page.js"></script>
 </body>
 </html>

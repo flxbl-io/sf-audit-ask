@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <label>Case Triage</label>
+    <description>A sample flow for Ask Flux: routes a new or changed support case by customer tier, incident kind, warranty and mood.</description>
+    <processType>AutoLaunchedFlow</processType>
+    <status>Active</status>
+    <start>
+        <locationX>50</locationX><locationY>0</locationY>
+        <connector><targetReference>Customer_Tier</targetReference></connector>
+        <filterLogic>and</filterLogic>
+        <filters><field>Status</field><operator>NotEqualTo</operator><value><stringValue>Closed</stringValue></value></filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+
+    <decisions>
+        <name>Customer_Tier</name>
+        <label>Customer Tier</label>
+        <defaultConnector><targetReference>Customer_Mood</targetReference></defaultConnector>
+        <defaultConnectorLabel>Basic</defaultConnectorLabel>
+        <rules>
+            <name>Strategic</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions><leftValueReference>$Record.Account.Tier__c</leftValueReference><operator>EqualTo</operator><rightValue><stringValue>Platinum</stringValue></rightValue></conditions>
+            <conditions><leftValueReference>$Record.Account.Strategic_Account__c</leftValueReference><operator>EqualTo</operator><rightValue><booleanValue>true</booleanValue></rightValue></conditions>
+            <connector><targetReference>Incident_Kind</targetReference></connector>
+            <label>Strategic</label>
+        </rules>
+        <rules>
+            <name>Standard</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions><leftValueReference>$Record.Account.Tier__c</leftValueReference><operator>EqualTo</operator><rightValue><stringValue>Gold</stringValue></rightValue></conditions>
+            <connector><targetReference>Account_Size</targetReference></connector>
+            <label>Standard</label>
+        </rules>
+    </decisions>
+
+    <decisions>
+        <name>Incident_Kind</name>
+        <label>Incident Kind</label>
+        <defaultConnector><targetReference>Assign_Strategic_Queue</targetReference></defaultConnector>
+        <defaultConnectorLabel>Other</defaultConnectorLabel>
+        <rules>
+            <name>Security_Incident</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions><leftValueReference>$Record.Type</leftValueReference><operator>EqualTo</operator><rightValue><stringValue>Security</stringValue></rightValue></conditions>
+            <connector><targetReference>Assign_Security_Team</targetReference></connector>
+            <label>Security incident</label>
+        </rules>
+        <rules>
+            <name>Major_Outage</name>
+            <conditionLogic>1 AND (2 OR 3)</conditionLogic>
+            <conditions><leftValueReference>$Record.Type</leftValueReference><operator>EqualTo</operator><rightValue><stringValue>Outage</stringValue></rightValue></conditions>
+            <conditions><leftValueReference>$Record.Priority</leftValueReference><operator>EqualTo</operator><rightValue><stringValue>High</stringValue></rightValue></conditions>
+            <conditions><leftValueReference>$Record.Priority</leftValueReference><operator>IsChanged</operator><rightValue><booleanValue>true</booleanValue></rightValue></conditions>
+            <connector><targetReference>Page_On_Call</targetReference></connector>
+            <label>Major outage</label>
+        </rules>
+    </decisions>
+
+    <decisions>
+        <name>Contact_Channel</name>
+        <label>Contact Channel</label>
+        <defaultConnector><targetReference>Email_Status_Update</targetReference></defaultConnector>
+        <defaultConnectorLabel>Written</defaultConnectorLabel>
+        <rules>
+            <name>By_Phone</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions><leftValueReference>$Record.Origin</leftValueReference><operator>EqualTo</operator><rightValue><stringValue>Phone</stringValue></rightValue></conditions>
+            <connector><targetReference>Schedule_Call_Back</targetReference></connector>
+            <label>By phone</label>
+        </rules>
+    </decisions>
+
+    <decisions>
+        <name>Account_Size</name>
+        <label>Account Size</label>
+        <defaultConnector><targetReference>Warranty_Check</targetReference></defaultConnector>
+        <defaultConnectorLabel>Regular</defaultConnectorLabel>
+        <rules>
+            <name>Large_Account</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions><leftValueReference>$Record.Account.AnnualRevenue</leftValueReference><operator>GreaterThan</operator><rightValue><numberValue>10000000</numberValue></rightValue></conditions>
+            <connector><targetReference>Assign_Premium_Queue</targetReference></connector>
+            <label>Large account</label>
+        </rules>
+    </decisions>
+
+    <decisions>
+        <name>Warranty_Check</name>
+        <label>Warranty Check</label>
+        <defaultConnector><targetReference>Send_Repair_Quote</targetReference></defaultConnector>
+        <defaultConnectorLabel>Not covered</defaultConnectorLabel>
+        <rules>
+            <name>Covered</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions><leftValueReference>$Record.AssetId</leftValueReference><operator>IsNull</operator><rightValue><booleanValue>false</booleanValue></rightValue></conditions>
+            <conditions><leftValueReference>$Record.Under_Warranty__c</leftValueReference><operator>EqualTo</operator><rightValue><booleanValue>true</booleanValue></rightValue></conditions>
+            <connector><targetReference>Create_RMA</targetReference></connector>
+            <label>Covered</label>
+        </rules>
+    </decisions>
+
+    <decisions>
+        <name>Customer_Mood</name>
+        <label>Customer Mood</label>
+        <defaultConnector><targetReference>Send_KB_Article</targetReference></defaultConnector>
+        <defaultConnectorLabel>Calm</defaultConnectorLabel>
+        <rules>
+            <name>Upset</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions><leftValueReference>$Record.Sentiment__c</leftValueReference><operator>EqualTo</operator><rightValue><stringValue>Negative</stringValue></rightValue></conditions>
+            <conditions><leftValueReference>$Record.Description</leftValueReference><operator>Contains</operator><rightValue><stringValue>complaint</stringValue></rightValue></conditions>
+            <connector><targetReference>Escalate_To_Supervisor</targetReference></connector>
+            <label>Upset</label>
+        </rules>
+    </decisions>
+
+    <assignments><name>Assign_Security_Team</name><label>Route to Security team</label></assignments>
+    <assignments><name>Assign_Strategic_Queue</name><label>Route to Strategic queue</label></assignments>
+    <assignments><name>Assign_Premium_Queue</name><label>Route to Premium queue</label></assignments>
+    <actionCalls><name>Page_On_Call</name><label>Page the on-call engineer</label><connector><targetReference>Contact_Channel</targetReference></connector></actionCalls>
+    <actionCalls><name>Schedule_Call_Back</name><label>Schedule a call back</label></actionCalls>
+    <actionCalls><name>Email_Status_Update</name><label>Email a status update</label></actionCalls>
+    <recordCreates><name>Create_RMA</name><label>Create a return (RMA)</label></recordCreates>
+    <actionCalls><name>Send_Repair_Quote</name><label>Send a repair quote</label></actionCalls>
+    <actionCalls><name>Escalate_To_Supervisor</name><label>Escalate to a supervisor</label></actionCalls>
+    <actionCalls><name>Send_KB_Article</name><label>Send a knowledge article</label></actionCalls>
+</Flow>

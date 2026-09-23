@@ -56,6 +56,13 @@ export function jev({ apiKey, base = 'https://api.typesafe.ai/v1', model = 'jev-
   }
 
   return {
+    /** Any questions over one state, answered as Jev answers them: { answers, tokens }. Used by the flow walk. */
+    async decide(state, questions, signal) {
+      const json = await ask(state, questions, signal);
+      if (!json?.answers || typeof json.answers !== 'object') throw Object.assign(new Error('Jev\'s answer was unreadable'), { code: 'jev' });
+      return { answers: json.answers, tokens: Number(json.usage?.input_tokens) || 0 };
+    },
+
     async judge(question, lines, signal) {
       const json = await ask({ question, audit_trail: lines }, { yes: { type: 'noul', instructions: INSTRUCTIONS, criteria: CRITERIA } }, signal);
       const p = json?.answers?.yes?.noul;

@@ -110,7 +110,7 @@ test('the page and its assets are served from here, under a policy that allows n
 
 test('the page is told the limits in force, who words the answers, where attempts are counted, and which build it is', async () => {
   const { json } = await call('/api/config');
-  assert.deepEqual(json, { maxAttempts: 5, windowHours: 24, maxRows: 100000, maxBodyBytes: 12 * 1024 * 1024, turnstileSiteKey: null, wording: 'template', counter: 'memory', sourceUrl: 'https://github.com/flxbl-io/sf-audit-ask', commit: 'abc1234def', prices: { jevInput: 0.042, haikuInput: 1, haikuOutput: 5 } });
+  assert.deepEqual(json, { maxAttempts: 5, windowHours: 24, maxRows: 100000, maxBodyBytes: 12 * 1024 * 1024, turnstileSiteKey: null, wording: 'template', counter: 'memory', sourceUrl: 'https://github.com/flxbl-io/sf-audit-ask', commit: 'abc1234def', prices: { jevInput: 0.042, haikuInput: 1, haikuOutput: 5, opusInput: 5, opusOutput: 25 }, flow: { maxWalks: 60, writer: false, walker: false } });
 });
 
 test('an answer carries a sentence, and says who wrote it', async () => {

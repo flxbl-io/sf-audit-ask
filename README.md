@@ -7,10 +7,11 @@ can be wrong.**
 ```bash
 npm ci
 TYPESAFE_API_KEY=... npm start        # http://127.0.0.1:8787
-npm test                              # 48 tests, no network, no paid API
+npm test                              # 65 tests, no network, no paid API
 ```
 
-Node 22 or later. One dependency, pinned exactly: `@anthropic-ai/sdk`, used only to word the sentence under an answer.
+Node 22 or later. One dependency, pinned exactly: `@anthropic-ai/sdk`, used only to word the sentence under an answer
+and to write the flow walk's situations.
 
 ## What a visitor is promised, and where to check it
 
@@ -53,6 +54,22 @@ question, tokens read), from the token counts the two services report with every
 million tokens read (output is free), Claude Haiku at $1 in and $5 out per million (`src/cost.js`; `/api/config`
 repeats the prices). About $0.01 for a question over 3,700 rows; about $0.27 for a no over 100,000.
 
+## The second experiment: a flow walk
+
+The **Flow walk** tab (`#flow`) takes a Salesforce flow's `.flow-meta.xml`, draws it where Flow Builder saved each
+element, and walks it for a situation told in plain words. Jev is the engine: every decision (the start conditions
+first) is one Choice, "the flow is here: which outcome does it take?", over that decision's own outcomes, all asked in
+one request. The page follows the flow's connectors through the answers, one step at a time, and stops to ask the person
+where Jev is under 0.6. Claude Opus 5 writes six situations to try, each with the path it meant, so the page can say
+whether Jev went the same way. Only the decisions, the step names and the formulas the decisions use are sent; a flow
+file holds no records.
+
+| | |
+| --- | --- |
+| Files | All under a `flow/` folder: `public/flow/graph.js` (read, walk, lay out; the browser and the tests share it), `public/flow/page.js` (the tab), `src/flow/questions.js` (Jev's questions), `src/flow/situations.js` (Opus), `test/flow/`. |
+| Measured | 11 to 12 of 14 situations on a real 10-decision flow took exactly the path code walked from record values. Where two outcomes both hold, Salesforce takes the first and Jev can take the more obvious; an outcome the situation never settles can go to the default. |
+| Cost | A walk is one Jev request: about 1,500 to 3,000 tokens, $0.00006 to $0.0001. Six situations from Opus: about $0.04. Both are shown, with a tally for the tab. |
+
 ## Limits
 
 | | |
@@ -62,6 +79,7 @@ repeats the prices). About $0.01 for a question over 3,700 rows; about $0.27 for
 | Address | The socket's; `x-real-ip` on Vercel (set automatically); `CLIENT_IP_HEADER=cf-connecting-ip` behind a Cloudflare Tunnel; or `TRUSTED_PROXIES` hops of `x-forwarded-for`, counted from the right. An IPv6 visitor is their /64. |
 | Rows | The newest 100,000 of a file. A request is refused before its body is read when the visitor has no pass or no questions left. |
 | Jev | 8 requests in flight, shared by every visitor, because the rate limit is per account. At 24 in flight, 37 of 306 requests were throttled (and retried). |
+| Walks | 60 per 24 hours on the flow tab (`WALKS`), counted the same way and apart from questions (Redis prefix `walks`). Writing situations counts as one. |
 
 Attempts are counted in the process's memory unless a Redis is configured (`UPSTASH_REDIS_REST_URL` and
 `UPSTASH_REDIS_REST_TOKEN`, or the `KV_REST_API_URL` and `KV_REST_API_TOKEN` pair Vercel's integration sets, under any

@@ -15,7 +15,9 @@ import { explainer } from './src/explain.js';
 import { passes, turnstile } from './src/human.js';
 import { jev } from './src/jev.js';
 import { addressKey, attempts, clientAddress, redisAttempts, redisCommand, semaphore } from './src/limits.js';
-import { cost, PRICES } from './src/cost.js';
+import { cost, opusCost, PRICES } from './src/cost.js';
+import { cleanFlow, isInvalid, navigate, LIMITS as FLOW_LIMITS } from './src/flow/questions.js';
+import { situationWriter } from './src/flow/situations.js';
 
 // Everything the page loads, and nothing else. The font is served from here so that no visit touches a font CDN;
 // the pictures of Flux likewise.
@@ -23,6 +25,9 @@ const FILES = {
   '/': ['index.html', 'text/html; charset=utf-8'],
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
   '/csv.js': ['csv.js', 'text/javascript; charset=utf-8'],
+  '/flow/graph.js': ['flow/graph.js', 'text/javascript; charset=utf-8'],
+  '/flow/page.js': ['flow/page.js', 'text/javascript; charset=utf-8'],
+  '/flow/samples/case-triage.flow-meta.xml': ['flow/samples/case-triage.flow-meta.xml', 'application/xml; charset=utf-8', 'public, max-age=3600'],
   '/style.css': ['style.css', 'text/css; charset=utf-8'],
   '/favicon.png': ['favicon.png', 'image/png', 'public, max-age=86400'],
   '/apple-touch-icon.png': ['apple-touch-icon.png', 'image/png', 'public, max-age=86400'],
@@ -40,6 +45,7 @@ const CSP = (human) => [
 const FIELD_LIMITS = { at: 40, action: 120, section: 120, display: 2000 };
 const BROWSER_ID = /^[A-Za-z0-9-]{16,64}$/;
 const BODY_BYTES = 12 * 1024 * 1024;
+const FLOW_BYTES = 1024 * 1024;
 const INFLATED_BYTES = 96 * 1024 * 1024;
 
 class Refused extends Error {
@@ -78,6 +84,10 @@ function rowsFrom(input) {
 export function createHandler({
   judge,
   locate,
+  decide = null,           // Jev over any questions: the flow tab's walks
+  writeSituations = null,  // Claude Opus 5 writing situations for a flow; the tab works without it
+  walks = null,            // the flow tab's own counter; in memory unless one is handed in
+  maxWalks = 60,
   explain = explainer(),
   human = null,            // { siteKey, verify(token, ip), secret }: when set, a question needs a pass from a passed check
   questions = null,        // the attempt counter; in memory unless one is handed in (Redis, where processes come and go)
@@ -95,6 +105,8 @@ export function createHandler({
   log = () => {},
 } = {}) {
   const counter = questions ?? attempts({ max: maxAttempts, windowMs: attemptWindowMs, now });
+  // Walking a flow is one small Jev request, so it has its own, larger allowance.
+  const walkCounter = walks ?? attempts({ max: maxWalks, windowMs: attemptWindowMs, now });
   const gate = semaphore(inFlight);
   const csp = CSP(Boolean(human));
   const humans = human ? passes({ secret: human.secret, now }) : null;
@@ -112,9 +124,10 @@ export function createHandler({
     'GET /api/config': async () => ({
       maxAttempts, windowHours: Math.round(attemptWindowMs / 3600_000), maxRows: MAX_ROWS, maxBodyBytes,
       turnstileSiteKey: human?.siteKey ?? null, wording, counter: questions ? 'redis' : 'memory', sourceUrl, commit, prices: PRICES,
+      flow: { maxWalks, writer: Boolean(writeSituations), walker: Boolean(decide) },
     }),
 
-    'GET /api/limits': async (request) => ({ left: await counter.left(visitor(request)), max: maxAttempts }),
+    'GET /api/limits': async (request) => ({ left: await counter.left(visitor(request)), max: maxAttempts, walksLeft: await walkCounter.left(visitor(request)), maxWalks }),
 
     // The check is made once; the pass it buys is good for half an hour from the same address.
     'POST /api/human': async (request) => {
@@ -156,8 +169,52 @@ export function createHandler({
     },
   };
 
+  /**
+   * The flow tab's two calls share one shape: a passed check, an attempt counted, the work, and the attempt given back
+   * if the work failed. `work(input)` gets the parsed body with its flow already checked.
+   */
+  const flowRoute = (name, work) => async (request) => {
+    if (humans && !humans.check(request.headers['x-human-pass'], addressKey(address(request)))) {
+      throw new Refused(403, 'Please do the "are you human" check again.', { human: false });
+    }
+    const keys = visitor(request);
+    if ((await walkCounter.left(keys)) < 1) throw new Refused(429, `That is all ${maxWalks} walks for now.`, { walksLeft: 0 });
+    const input = await body(request, FLOW_BYTES);
+    let flow;
+    try { flow = cleanFlow(input?.flow); } catch (error) { if (isInvalid(error)) throw new Refused(400, error.message); throw error; }
+    const taken = await walkCounter.take(keys);
+    if (!taken.ok) throw new Refused(429, `That is all ${maxWalks} walks for now.`, { walksLeft: 0, retryAt: taken.retryAt });
+    const started = now();
+    try {
+      const result = await work(input, flow);
+      log(`${name} decisions=${flow.decisions.length} ${result.log} ms=${now() - started}`);
+      delete result.log;
+      return { ...result, walksLeft: taken.left };
+    } catch (error) {
+      await Promise.resolve(walkCounter.refund(keys, taken)).catch(() => {});
+      log(`${name} failed: ${error.message}`);
+      throw new Refused(error instanceof Refused ? error.status : 502, error instanceof Refused ? error.message : `${error.userMessage ?? 'That could not be done just now.'} It was not counted against you.`,
+        { walksLeft: await Promise.resolve(walkCounter.left(keys)).catch(() => undefined) });
+    }
+  };
+
+  // The situation is logged by neither route: only counts and timings.
+  routes['POST /api/flow/walk'] = flowRoute('walk', async (input, flow) => {
+    if (!decide) throw new Refused(503, 'Jev is not set up on this server.');
+    const situation = typeof input?.situation === 'string' ? input.situation.trim() : '';
+    if (situation.length < 10 || situation.length > FLOW_LIMITS.situation) throw new Refused(400, `Describe what happened in 10 to ${FLOW_LIMITS.situation} characters.`);
+    const walked = await navigate(flow, situation, { decide });
+    const spent = cost({ jevTokens: walked.tokens });
+    return { answers: walked.answers, tokens: walked.tokens, requests: walked.requests, cost: spent.jev, log: `requests=${walked.requests} tokens=${walked.tokens}` };
+  });
+  routes['POST /api/flow/situations'] = flowRoute('situations', async (input, flow) => {
+    if (!writeSituations) throw new Refused(503, 'No situation writer is set up on this server. Describe one in your own words.');
+    const written = await writeSituations(flow).catch((error) => { throw Object.assign(error, { userMessage: 'Claude could not write situations just now.' }); });
+    return { situations: written.situations, model: written.model, tokens: written.tokens, cost: opusCost(written.tokens), log: `situations=${written.situations.length} in=${written.tokens.input} out=${written.tokens.output}` };
+  });
+
   // Keys whose attempts have all left the window are forgotten, so the map does not grow for ever.
-  setInterval(() => counter.sweep(), 10 * 60_000).unref();
+  setInterval(() => { counter.sweep(); walkCounter.sweep(); }, 10 * 60_000).unref();
 
   return async function handler(request, response) {
     const path = new URL(request.url, 'http://localhost').pathname;
@@ -200,9 +257,11 @@ export function fromEnv(env = process.env, log = (line) => console.log(`${new Da
     .map((name) => ({ name, url: env[name], token: env[`${name.slice(0, -4)}_TOKEN`] }))[0];
   const redis = restPair('REDIS_REST') ?? restPair('KV_REST_API');
   const salt = env.COUNTER_SALT || env.TURNSTILE_SECRET || env.TYPESAFE_API_KEY || '';
-  const questions = redis
-    ? redisAttempts({ command: redisCommand({ url: redis.url, token: redis.token }), hash: (key) => createHmac('sha256', `count:${salt}`).update(key).digest('base64url').slice(0, 22), max: maxAttempts, windowMs: attemptWindowMs })
-    : null;
+  const maxWalks = number('WALKS', 60);
+  const hash = (key) => createHmac('sha256', `count:${salt}`).update(key).digest('base64url').slice(0, 22);
+  const command = redis ? redisCommand({ url: redis.url, token: redis.token }) : null;
+  const questions = redis ? redisAttempts({ command, hash, max: maxAttempts, windowMs: attemptWindowMs }) : null;
+  const walks = redis ? redisAttempts({ command, hash, max: maxWalks, windowMs: attemptWindowMs, prefix: 'walks' }) : null;
   const human = env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET ? { siteKey: env.TURNSTILE_SITE_KEY, secret: env.TURNSTILE_SECRET, verify: turnstile({ secret: env.TURNSTILE_SECRET }) } : null;
   // Vercel sets x-real-ip itself and lets nothing else write it; its request bodies stop at 4.5 MB.
   const clientIpHeader = env.CLIENT_IP_HEADER || (onVercel ? 'x-real-ip' : null);
@@ -211,7 +270,8 @@ export function fromEnv(env = process.env, log = (line) => console.log(`${new Da
       ...jev({ apiKey: env.TYPESAFE_API_KEY, base: env.TYPESAFE_BASE_URL, model: env.TYPESAFE_MODEL }),
       explain: explainer({ apiKey: env.ANTHROPIC_API_KEY }),
       wording: env.ANTHROPIC_API_KEY ? 'haiku' : 'template',
-      human, questions, maxAttempts, attemptWindowMs, clientIpHeader,
+      writeSituations: situationWriter({ apiKey: env.ANTHROPIC_API_KEY }),
+      human, questions, maxAttempts, attemptWindowMs, clientIpHeader, walks, maxWalks,
       inFlight: number('JEV_IN_FLIGHT', 8),
       trustedProxies: number('TRUSTED_PROXIES', 0),
       maxBodyBytes: number('MAX_BODY_BYTES', onVercel ? 4 * 1024 * 1024 : BODY_BYTES),
