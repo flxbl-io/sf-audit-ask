@@ -184,7 +184,7 @@ async function suggest() {
   $('suggest-status').textContent = 'Claude Opus 5 is reading the flow and writing situations. It takes about 20 seconds.';
   const asked = flow;
   try {
-    const result = await post('/api/flow/situations', { flow: sent });
+    const result = await post('/api/flow-situations', { flow: sent });
     if (asked !== flow) return;
     situations = result.situations;
     allowance(result.walksLeft);
@@ -245,7 +245,7 @@ async function walk(text, situation) {
     let result = walked.get(text);
     if (!result) {
       const started = performance.now();
-      const reply = await post('/api/flow/walk', { flow: sent, situation: text });
+      const reply = await post('/api/flow-walk', { flow: sent, situation: text });
       result = { answers: reply.answers, meta: { ms: Math.round(performance.now() - started), tokens: reply.tokens, requests: reply.requests, decisions: sent.decisions.length, cost: reply.cost ?? 0 } };
       walked.set(text, result);
       allowance(reply.walksLeft);

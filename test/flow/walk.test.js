@@ -153,7 +153,7 @@ const post = async (path, body, ip) => {
 };
 
 test('a walk returns an answer for every decision, and counts against its own allowance', async () => {
-  const walked = await post('/api/flow/walk', { flow: wire(flow), situation: 'A Platinum customer reports their whole site is down.' }, '198.51.100.20');
+  const walked = await post('/api/flow-walk', { flow: wire(flow), situation: 'A Platinum customer reports their whole site is down.' }, '198.51.100.20');
   assert.equal(walked.status, 200);
   assert.equal(Object.keys(walked.json.answers).length, 7);
   assert.equal(walked.json.walksLeft, 2);
@@ -163,7 +163,7 @@ test('a walk returns an answer for every decision, and counts against its own al
 });
 
 test('a walk is refused for a situation too short to read, and not counted', async () => {
-  const refused = await post('/api/flow/walk', { flow: wire(flow), situation: 'down' }, '198.51.100.21');
+  const refused = await post('/api/flow-walk', { flow: wire(flow), situation: 'down' }, '198.51.100.21');
   assert.equal(refused.status, 400);
   const limits = await (await fetch(`${base}/api/limits`, { headers: { 'x-forwarded-for': '198.51.100.21' } })).json();
   assert.equal(limits.walksLeft, 3);
@@ -171,7 +171,7 @@ test('a walk is refused for a situation too short to read, and not counted', asy
 
 test('a walk Jev could not answer is given back', async () => {
   failing = true;
-  const failed = await post('/api/flow/walk', { flow: wire(flow), situation: 'A Platinum customer reports their whole site is down.' }, '198.51.100.22');
+  const failed = await post('/api/flow-walk', { flow: wire(flow), situation: 'A Platinum customer reports their whole site is down.' }, '198.51.100.22');
   failing = false;
   assert.equal(failed.status, 502);
   assert.match(failed.json.error, /not counted/);
@@ -180,13 +180,13 @@ test('a walk Jev could not answer is given back', async () => {
 
 test('situations are written by Claude and counted; the allowance runs out', async () => {
   const ip = '198.51.100.23';
-  const first = await post('/api/flow/situations', { flow: wire(flow) }, ip);
+  const first = await post('/api/flow-situations', { flow: wire(flow) }, ip);
   assert.equal(first.status, 200);
   assert.equal(first.json.situations[0].title, 'Outage');
   assert.equal(first.json.cost, 0.0525);
-  await post('/api/flow/situations', { flow: wire(flow) }, ip);
-  await post('/api/flow/situations', { flow: wire(flow) }, ip);
-  const out = await post('/api/flow/situations', { flow: wire(flow) }, ip);
+  await post('/api/flow-situations', { flow: wire(flow) }, ip);
+  await post('/api/flow-situations', { flow: wire(flow) }, ip);
+  const out = await post('/api/flow-situations', { flow: wire(flow) }, ip);
   assert.equal(out.status, 429);
   assert.equal(written, 3);
 });

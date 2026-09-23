@@ -198,8 +198,9 @@ export function createHandler({
     }
   };
 
+  // One path segment each: on Vercel, /api/* reaches api/[route].js only when there is one.
   // The situation is logged by neither route: only counts and timings.
-  routes['POST /api/flow/walk'] = flowRoute('walk', async (input, flow) => {
+  routes['POST /api/flow-walk'] = flowRoute('walk', async (input, flow) => {
     if (!decide) throw new Refused(503, 'Jev is not set up on this server.');
     const situation = typeof input?.situation === 'string' ? input.situation.trim() : '';
     if (situation.length < 10 || situation.length > FLOW_LIMITS.situation) throw new Refused(400, `Describe what happened in 10 to ${FLOW_LIMITS.situation} characters.`);
@@ -207,7 +208,7 @@ export function createHandler({
     const spent = cost({ jevTokens: walked.tokens });
     return { answers: walked.answers, tokens: walked.tokens, requests: walked.requests, cost: spent.jev, log: `requests=${walked.requests} tokens=${walked.tokens}` };
   });
-  routes['POST /api/flow/situations'] = flowRoute('situations', async (input, flow) => {
+  routes['POST /api/flow-situations'] = flowRoute('situations', async (input, flow) => {
     if (!writeSituations) throw new Refused(503, 'No situation writer is set up on this server. Describe one in your own words.');
     const written = await writeSituations(flow).catch((error) => { throw Object.assign(error, { userMessage: 'Claude could not write situations just now.' }); });
     return { situations: written.situations, model: written.model, tokens: written.tokens, cost: opusCost(written.tokens), log: `situations=${written.situations.length} in=${written.tokens.input} out=${written.tokens.output}` };
