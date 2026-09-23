@@ -71,10 +71,14 @@ export function outline(flow) {
 
 const clean = (s, limit) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, limit);
 
-/** `write(flow)` resolves to { situations, tokens: { input, output }, model }. Throws when there is no key or no answer. */
-export function situationWriter({ apiKey, client, timeoutMs = 55_000 } = {}) {
+/**
+ * `write(flow)` resolves to { situations, tokens: { input, output }, model }. Throws when there is no key or no answer.
+ * Seen live: 16-21 s for a 7-10 decision flow, 31 s for 11, 65 s for 39. The Vercel function may run 300 s, so one
+ * attempt gets 270 s: a retry after a timeout could not finish in time, and a failure is not counted against anyone.
+ */
+export function situationWriter({ apiKey, client, timeoutMs = 270_000 } = {}) {
   if (!apiKey && !client) return null;
-  const anthropic = client ?? new Anthropic({ apiKey, timeout: timeoutMs, maxRetries: 1 });
+  const anthropic = client ?? new Anthropic({ apiKey, timeout: timeoutMs, maxRetries: 0 });
   return async function write(flow) {
     const response = await anthropic.beta.messages.create({
       model: MODEL,

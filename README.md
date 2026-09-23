@@ -100,7 +100,7 @@ The store holds a keyed hash of the address and browser identifier, for 24 hours
 4. Leave Vercel Web Analytics and Speed Insights **off**, or the no-telemetry promise on the page is no longer true.
 
 Request bodies on Vercel stop at 4.5 MB, which a full 100,000-row trail fits under (about 2 MB gzipped); the page
-checks before sending. A no on 100,000 rows takes about 9 s, inside the 60 s the function is given. The commit
+checks before sending. A no on 100,000 rows takes about 9 s; Opus writing situations for a 39-decision flow, about 65 s. The function is given 300 s. The commit
 shown in the footer comes from `VERCEL_GIT_COMMIT_SHA`.
 
 ## Running it: Hetzner behind Cloudflare

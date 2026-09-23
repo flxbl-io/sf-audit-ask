@@ -4,7 +4,7 @@
   "buildCommand": "",
   "outputDirectory": "public",
   "cleanUrls": true,
-  "functions": { "api/[route].js": { "maxDuration": 60, "memory": 1024 } },
+  "functions": { "api/[route].js": { "maxDuration": 300, "memory": 1024 } },
   "headers": [
     {
       "source": "/(.*)",

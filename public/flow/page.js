@@ -181,7 +181,7 @@ async function suggest() {
   const box = $('situations');
   box.replaceChildren(...Array.from({ length: 6 }, () => h('div', { className: 'situation skeleton' }, h('span'), h('span'), h('span'))));
   $('suggest').disabled = true;
-  $('suggest-status').textContent = 'Claude Opus 5 is reading the flow and writing situations. It takes about 20 seconds.';
+  $('suggest-status').textContent = 'Claude Opus 5 is reading the flow and writing situations. It takes 20 seconds to a minute, longer for a big flow.';
   const asked = flow;
   try {
     const result = await post('/api/flow-situations', { flow: sent });
