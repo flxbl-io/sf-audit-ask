@@ -137,7 +137,9 @@ function load(text, name) {
   $('flow-sample').hidden = true;
   $('flow-loaded').hidden = false;
   $('flow-name').textContent = flow.label;
-  $('flow-detail').textContent = `${name} · ${describeFlow(flow)}`;
+  $('flow-filename').textContent = name;
+  $('flow-filename').title = name;
+  $('flow-detail').textContent = describeFlow(flow);
   $('flow-ask').setAttribute('aria-disabled', String(!sent.decisions.length));
   for (const control of [$('situation'), $('walk'), $('suggest')]) control.disabled = !sent.decisions.length;
   $('suggest').hidden = !config.flow.writer;
