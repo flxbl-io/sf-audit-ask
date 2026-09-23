@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { after, before, test } from 'node:test';
-import { parseFlow, wire, follow, layout, decisionsOf, endNodeOf, ENTRY } from '../../public/flow/graph.js';
+import { parseFlow, wire, follow, layout, decisionsOf, endNodeOf, writable, WRITES, ENTRY } from '../../public/flow/graph.js';
 import { cleanFlow, decisionQuestions, describe, isInvalid, navigate, sentence, words } from '../../src/flow/questions.js';
 import { outline } from '../../src/flow/situations.js';
 import { createApp } from '../../server.js';
@@ -141,6 +141,21 @@ test('a decision too large for Jev to read is left for the person, and the rest 
   assert.deepEqual(steps.at(-1).ranked, []);
 });
 
+/** The sample flow grown to `regions` copies of its decisions and steps: a big flow, without anyone's metadata. */
+const grown = (regions) => {
+  const base = wire(flow);
+  const copy = (list, k) => list.map((x) => ({ ...x, name: x.name ? `${x.name}_${k}` : undefined, label: `${x.label} ${k}` }));
+  return { ...base, decisions: Array.from({ length: regions }, (_, k) => copy(base.decisions, k)).flat(), steps: Array.from({ length: regions }, (_, k) => copy(base.steps, k)).flat() };
+};
+
+test('Claude writes situations only for a flow it can finish in good time; a bigger one is left to the person', () => {
+  assert.equal(writable(wire(flow)), true);
+  assert.equal(writable(grown(4)), true);                       // 28 decisions, 64 elements
+  assert.equal(writable(grown(5)), false);                      // 35 decisions: over 30
+  const wideButFew = { ...wire(flow), steps: Array.from({ length: WRITES.elements }, (_, i) => ({ label: `Step ${i}`, next: 'the end of the flow' })) };
+  assert.equal(writable(wideButFew), false);                    // 7 decisions, but 157 elements
+});
+
 test('the situation writer reads the whole flow: start conditions, decisions and where every step goes', () => {
   const text = outline(sent);
   assert.match(text, /runs on one save of a Salesforce Case record \(it was created or updated\)/);
@@ -191,6 +206,15 @@ test('a walk Jev could not answer is given back', async () => {
   assert.equal(failed.status, 502);
   assert.match(failed.json.error, /not counted/);
   assert.equal(failed.json.walksLeft, 3);
+});
+
+test('a flow too large for Claude is refused before it is counted, and Claude is not asked', async () => {
+  const before = written;
+  const refused = await post('/api/flow-situations', { flow: grown(5) }, '198.51.100.24');
+  assert.equal(refused.status, 413);
+  assert.match(refused.json.error, /too large for Claude.*Describe one in your own words/);
+  assert.equal(refused.json.walksLeft, 3);
+  assert.equal(written, before);
 });
 
 test('situations are written by Claude and counted; the allowance runs out', async () => {

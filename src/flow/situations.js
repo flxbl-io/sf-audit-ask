@@ -6,6 +6,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { sentence, setting, objectName, a } from './questions.js';
+export { writable, WRITES } from '../../public/flow/graph.js';
 
 export const MODEL = 'claude-opus-5';
 const COUNT = 6;

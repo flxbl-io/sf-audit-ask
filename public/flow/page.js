@@ -4,7 +4,7 @@
  * connectors through those answers, one step at a time, so the path can be watched. Where Jev is unsure the walk
  * stops and asks the person.
  */
-import { parseFlow, wire, follow, layout, endNodeOf, decisionsOf, objectName, ENTRY } from '/flow/graph.js';
+import { parseFlow, wire, follow, layout, endNodeOf, decisionsOf, objectName, writable, ENTRY } from '/flow/graph.js';
 
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
@@ -142,16 +142,23 @@ function load(text, name) {
   $('flow-detail').textContent = describeFlow(flow);
   $('flow-ask').setAttribute('aria-disabled', String(!sent.decisions.length));
   for (const control of [$('situation'), $('walk'), $('suggest')]) control.disabled = !sent.decisions.length;
-  $('suggest').hidden = !config.flow.writer;
+  // A big flow is described by the person: Claude would take a minute or more to write for it.
+  const writes = config.flow.writer && writable(sent);
+  $('suggest').hidden = !writes;
   situations = [];
   walked.clear();
   current = null;
   active = null;
   run++;
   $('situation').value = '';
+  $('suggest-status').textContent = '';
   $('situations').replaceChildren();
   draw();
-  if (sent.decisions.length && config.flow.writer) suggest();
+  if (sent.decisions.length && writes) suggest();
+  else if (sent.decisions.length && config.flow.writer) {
+    $('suggest-status').textContent = `This flow is large (${decisionsOf(flow).length} decisions, ${flow.elements.size} elements), so Claude does not write situations for it: it would take a minute or more. Say what happened in your own words below.`;
+    $('situation').focus({ preventScroll: true });
+  }
 }
 
 function forget() {

@@ -48,6 +48,14 @@ const NOT_ELEMENTS = new Set(['variables', 'formulas', 'constants', 'textTemplat
   'interviewLabel', 'runInMode', 'environments', 'areMetricsLoggedToDataCloud', 'isTemplate', 'triggerOrder', 'sourceTemplate']);
 export const LIMITS = { elements: 600, decisions: 120, rules: 40, conditions: 40, text: 400 };
 
+/**
+ * How big a flow Claude writes situations for. Seen live: 15-20 s for 7-10 decisions, 31 s for 11, 62-65 s for 39
+ * decisions and 192 elements. Past this the person describes the situation: a minute's wait is not worth it.
+ */
+export const WRITES = { decisions: 30, elements: 150 };
+/** Whether Claude is asked to write situations for a flow, from what the server is sent of it (see wire()). */
+export const writable = (sent) => sent.decisions.length <= WRITES.decisions && sent.decisions.length + sent.steps.length <= WRITES.elements;
+
 /** acme__Status__c → Status; Urgent__c → Urgent (a prefix is a namespace only when a suffix follows too). */
 export const words = (api) => String(api).replace(/^[a-z0-9]+__(?=.+__[a-z]$)/i, '').replace(/__[a-z]$/i, '').replace(/_/g, ' ')
   .replace(/([a-z])([A-Z])/g, '$1 $2').trim();

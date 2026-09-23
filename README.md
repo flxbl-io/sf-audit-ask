@@ -69,6 +69,7 @@ file holds no records.
 | Files | All under a `flow/` folder: `public/flow/graph.js` (read, walk, lay out; the browser and the tests share it), `public/flow/page.js` (the tab), `src/flow/questions.js` (Jev's questions), `src/flow/situations.js` (Opus), `test/flow/`. |
 | Measured | 11 to 12 of 14 situations on a real 10-decision flow took exactly the path code walked from record values. Where two outcomes both hold, Salesforce takes the first and Jev can take the more obvious; an outcome the situation never settles can go to the default. |
 | Cost | A walk is one Jev request: about 1,500 to 3,000 tokens, $0.00006 to $0.0001. Six situations from Opus: about $0.04. Both are shown, with a tally for the tab. |
+| Big flows | Opus takes 15 to 20 s for 7 to 10 decisions and about a minute for 39. Past 30 decisions or 150 elements it is not asked (`WRITES` in `public/flow/graph.js`, checked by the page and the server): the person says what happened. Jev walks any flow the page can draw; a decision too large for Jev to read is left for the person to choose. |
 
 ## Limits
 

@@ -17,7 +17,7 @@ import { jev } from './src/jev.js';
 import { addressKey, attempts, clientAddress, redisAttempts, redisCommand, semaphore } from './src/limits.js';
 import { cost, opusCost, PRICES } from './src/cost.js';
 import { cleanFlow, isInvalid, navigate, LIMITS as FLOW_LIMITS } from './src/flow/questions.js';
-import { situationWriter } from './src/flow/situations.js';
+import { situationWriter, writable, WRITES } from './src/flow/situations.js';
 
 // Everything the page loads, and nothing else. The font is served from here so that no visit touches a font CDN;
 // the pictures of Flux likewise.
@@ -210,6 +210,7 @@ export function createHandler({
   });
   routes['POST /api/flow-situations'] = flowRoute('situations', async (input, flow) => {
     if (!writeSituations) throw new Refused(503, 'No situation writer is set up on this server. Describe one in your own words.');
+    if (!writable(flow)) throw new Refused(413, `This flow is too large for Claude to write situations in good time (more than ${WRITES.decisions} decisions or ${WRITES.elements} elements). Describe one in your own words.`);
     const written = await writeSituations(flow).catch((error) => { throw Object.assign(error, { userMessage: 'Claude could not write situations just now.' }); });
     return { situations: written.situations, model: written.model, tokens: written.tokens, cost: opusCost(written.tokens), log: `situations=${written.situations.length} in=${written.tokens.input} out=${written.tokens.output}` };
   });
