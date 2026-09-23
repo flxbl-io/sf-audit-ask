@@ -180,7 +180,7 @@ export function decisionQuestions(flow) {
 export async function navigate(flow, situation, { decide, signal }) {
   const { questions, keys } = decisionQuestions(flow);
   const state = { flow: flow.label, situation };
-  const stats = { tokens: 0, requests: 0 };
+  const stats = { tokens: 0, requests: 0, tooLarge: [] };
   const ask = async (names) => {
     try {
       const { answers, tokens } = await decide(state, Object.fromEntries(names.map((n) => [n, questions[n]])), signal);
@@ -188,7 +188,10 @@ export async function navigate(flow, situation, { decide, signal }) {
       stats.requests++;
       return answers;
     } catch (error) {
-      if (error.code !== 'too_large' || names.length < 2) throw error;
+      if (error.code !== 'too_large') throw error;
+      // One decision too large for Jev to read at all (32k tokens with the situation) gets no answer: the page asks the
+      // person there instead of failing the walk. Seen on 934 real flows: the largest decision is about 1,300 tokens.
+      if (names.length === 1) { stats.tooLarge.push(names[0]); return {}; }
       const half = Math.ceil(names.length / 2);
       return { ...(await ask(names.slice(0, half))), ...(await ask(names.slice(half))) };
     }

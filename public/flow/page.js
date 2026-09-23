@@ -248,7 +248,7 @@ async function walk(text, situation) {
     if (!result) {
       const started = performance.now();
       const reply = await post('/api/flow-walk', { flow: sent, situation: text });
-      result = { answers: reply.answers, meta: { ms: Math.round(performance.now() - started), tokens: reply.tokens, requests: reply.requests, decisions: sent.decisions.length, cost: reply.cost ?? 0 } };
+      result = { answers: reply.answers, tooLarge: reply.tooLarge ?? [], meta: { ms: Math.round(performance.now() - started), tokens: reply.tokens, requests: reply.requests, decisions: sent.decisions.length, cost: reply.cost ?? 0 } };
       walked.set(text, result);
       allowance(reply.walksLeft);
       spent.jev += result.meta.cost;
@@ -257,7 +257,7 @@ async function walk(text, situation) {
       tally();
     }
     if (token !== run) return;
-    current = { answers: result.answers, chosen: {}, situation, meta: result.meta, text };
+    current = { answers: result.answers, tooLarge: result.tooLarge ?? [], chosen: {}, situation, meta: result.meta, text };
     current.steps = follow(flow, current.answers, { chosen: current.chosen });
     $('trace-list').replaceChildren();
     await animate(current.steps, 0, token);
@@ -371,7 +371,7 @@ function trace(step, index) {
     item.append(h('span', { className: `trace-outcome${step.by === 'you' ? ' chosen' : ''}` }, step.outcome, h('em', {}, step.by === 'you' ? 'you chose' : `Jev ${pct(step.p)}`)));
     item.append(odds(step.ranked, step.outcome));
   }
-  if (step.fork) item.append(h('span', { className: 'trace-outcome ask' }, 'Jev cannot tell', h('em', {}, `best guess ${pct(step.ranked[0]?.[1])}`)));
+  if (step.fork) item.append(h('span', { className: 'trace-outcome ask' }, ...(step.ranked.length ? ['Jev cannot tell', h('em', {}, `best guess ${pct(step.ranked[0][1])}`)] : ['Not asked: too large'])));
   list.append(item);
   // Only the list scrolls to the newest step; the page stays where the person put it.
   list.scrollTo({ left: list.scrollWidth, behavior: reduced ? 'auto' : 'smooth' });
@@ -389,11 +389,18 @@ function odds(ranked, picked) {
 /** Jev was unsure: the person picks the outcome, and the walk goes on from that decision. */
 function fork(step, index) {
   const box = $('fork');
+  const name = step.kind === 'start' ? ENTRY : step.name;
+  // A decision Jev could not be asked (too large to read) has no odds: offer its own outcomes, in the flow's order.
+  const node = name === ENTRY ? flow.entry : flow.elements.get(name);
+  const options = step.ranked.length ? step.ranked : [...node.rules.map((r) => [r.label, null]), [node.default.label, null]];
+  const why = current.tooLarge?.includes(name)
+    ? ' This decision is too large for Jev to read in one go, so it was not asked. Which way should it go?'
+    : ' The situation does not settle this, so Jev is not sure. Which way should it go?';
   box.hidden = false;
   box.replaceChildren(
-    h('p', {}, h('strong', {}, step.kind === 'start' ? 'Does the flow start?' : step.label), ' The situation does not settle this, so Jev is not sure. Which way should it go?'),
-    h('div', { className: 'fork-options' }, ...step.ranked.map(([label, p]) => {
-      const button = h('button', { type: 'button', className: 'chip' }, label, h('em', {}, pct(p)));
+    h('p', {}, h('strong', {}, step.kind === 'start' ? 'Does the flow start?' : step.label), why),
+    h('div', { className: 'fork-options' }, ...options.map(([label, p]) => {
+      const button = h('button', { type: 'button', className: 'chip' }, label, p === null ? null : h('em', {}, pct(p)));
       button.addEventListener('click', async () => {
         box.hidden = true;
         current.chosen[step.kind === 'start' ? ENTRY : step.name] = label;

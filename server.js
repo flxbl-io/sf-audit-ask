@@ -206,7 +206,7 @@ export function createHandler({
     if (situation.length < 10 || situation.length > FLOW_LIMITS.situation) throw new Refused(400, `Describe what happened in 10 to ${FLOW_LIMITS.situation} characters.`);
     const walked = await navigate(flow, situation, { decide });
     const spent = cost({ jevTokens: walked.tokens });
-    return { answers: walked.answers, tokens: walked.tokens, requests: walked.requests, cost: spent.jev, log: `requests=${walked.requests} tokens=${walked.tokens}` };
+    return { answers: walked.answers, tooLarge: walked.tooLarge, tokens: walked.tokens, requests: walked.requests, cost: spent.jev, log: `requests=${walked.requests} tokens=${walked.tokens} too_large=${walked.tooLarge.length}` };
   });
   routes['POST /api/flow-situations'] = flowRoute('situations', async (input, flow) => {
     if (!writeSituations) throw new Refused(503, 'No situation writer is set up on this server. Describe one in your own words.');

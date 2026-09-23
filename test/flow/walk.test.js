@@ -126,6 +126,21 @@ test('navigate asks every decision at once, splits a request that is too large, 
   assert.equal(same.answers.D.probabilities.Same, 1);
 });
 
+test('a decision too large for Jev to read is left for the person, and the rest of the walk is still Jev\'s', async () => {
+  const decide = async (state, questions) => {
+    if ('Customer_Tier' in questions) throw Object.assign(new Error('too big'), { code: 'too_large' });
+    return { tokens: 10, answers: Object.fromEntries(Object.entries(questions).map(([name, q]) => [name, { choice: Object.keys(q.criteria)[0], probabilities: { [Object.keys(q.criteria)[0]]: 0.9 } }])) };
+  };
+  const walked = await navigate(sent, 'A Platinum customer reports an outage.', { decide });
+  assert.deepEqual(walked.tooLarge, ['Customer_Tier']);
+  assert.equal(walked.answers.Customer_Tier, undefined);
+  assert.equal(Object.keys(walked.answers).length, 6);
+  const steps = follow(flow, walked.answers);
+  assert.equal(steps.at(-1).name, 'Customer_Tier');
+  assert.equal(steps.at(-1).fork, true);
+  assert.deepEqual(steps.at(-1).ranked, []);
+});
+
 test('the situation writer reads the whole flow: start conditions, decisions and where every step goes', () => {
   const text = outline(sent);
   assert.match(text, /runs on one save of a Salesforce Case record \(it was created or updated\)/);
