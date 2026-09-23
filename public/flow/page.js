@@ -53,7 +53,7 @@ function turnstileToken() {
   return new Promise((resolve, reject) => {
     const render = () => {
       if (widget !== null) window.turnstile.remove(widget);
-      widget = window.turnstile.render('#flow-human-widget', { sitekey: config.turnstileSiteKey, theme: 'light', callback: resolve, 'error-callback': () => reject(new Error('The "are you human" check could not load. Please try again.')) });
+      widget = window.turnstile.render('#flow-human-widget', { sitekey: config.turnstileSiteKey, theme: 'light', callback: resolve, 'error-callback': () => reject(new Error('The "are you human" check did not go through. Please try it again.')) });
     };
     if (window.turnstile) return render();
     const script = Object.assign(document.createElement('script'), { src: 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit', async: true, onload: render });
@@ -183,7 +183,10 @@ async function suggest() {
   const box = $('situations');
   box.replaceChildren(...Array.from({ length: 6 }, () => h('div', { className: 'situation skeleton' }, h('span'), h('span'), h('span'))));
   $('suggest').disabled = true;
-  $('suggest-status').textContent = 'Claude Opus 5 is reading the flow and writing situations. It takes 20 seconds to a minute, longer for a big flow.';
+  const checking = config.turnstileSiteKey && !(human && human.until > Date.now() + 10_000);
+  $('suggest-status').textContent = checking
+    ? 'One quick check that you are a person first, just below. Then Claude Opus 5 reads the flow and writes situations, in 20 seconds to a minute, longer for a big flow.'
+    : 'Claude Opus 5 is reading the flow and writing situations. It takes 20 seconds to a minute, longer for a big flow.';
   const asked = flow;
   try {
     const result = await post('/api/flow-situations', { flow: sent });

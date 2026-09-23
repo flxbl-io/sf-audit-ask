@@ -75,6 +75,7 @@ h1 .name { color: var(--accent); }
 .loaded span { font-size: 13px; }
 .human { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
 .human small { font-size: 13px; color: var(--faint); }
+.human.flow-human { margin: 0 0 14px; }
 .note { margin: 12px 0 0; font-size: 13px; color: var(--soft); }
 .note.error { color: var(--accent-ink); }
 details { margin-top: 14px; font-size: 13px; }
